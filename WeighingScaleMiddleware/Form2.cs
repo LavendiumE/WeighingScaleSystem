@@ -822,6 +822,7 @@ namespace WeighingScaleMiddleware
         }
 
 
+
         private void btnSampling1_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(txtTargetBin1.Text, out decimal target))
@@ -856,8 +857,16 @@ namespace WeighingScaleMiddleware
             if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
+            decimal bin1 = 0;
+
+            if (decimal.TryParse(txtTargetBin1.Text, out decimal targetBin1)
+                && targetBin1 > 0)
+            {
+                bin1 = _samplingBin1;
+            }
+
             _rw2 = rw;
-            _samplingBin2 = rw - _samplingBin1;
+            _samplingBin2 = rw - bin1;
         }
 
         private void btnSampling3_Click(object sender, EventArgs e)
@@ -875,9 +884,23 @@ namespace WeighingScaleMiddleware
             if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
+            decimal bin1 = 0;
+            decimal bin2 = 0;
+
+            if (decimal.TryParse(txtTargetBin1.Text, out decimal targetBin1)
+                && targetBin1 > 0)
+            {
+                bin1 = _samplingBin1;
+            }
+
+            if (decimal.TryParse(txtTargetBin2.Text, out decimal targetBin2)
+                && targetBin2 > 0)
+            {
+                bin2 = _samplingBin2;
+            }
+
             _rw3 = rw;
-            _samplingBin3 =
-                rw - _samplingBin1 - _samplingBin2;
+            _samplingBin3 = rw - bin1 - bin2;
         }
 
         private void btnSampling4_Click(object sender, EventArgs e)
@@ -895,9 +918,30 @@ namespace WeighingScaleMiddleware
             if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
+            decimal bin1 = 0;
+            decimal bin2 = 0;
+            decimal bin3 = 0;
+
+            if (decimal.TryParse(txtTargetBin1.Text, out decimal targetBin1)
+                && targetBin1 > 0)
+            {
+                bin1 = _samplingBin1;
+            }
+
+            if (decimal.TryParse(txtTargetBin2.Text, out decimal targetBin2)
+                && targetBin2 > 0)
+            {
+                bin2 = _samplingBin2;
+            }
+
+            if (decimal.TryParse(txtTargetBin3.Text, out decimal targetBin3)
+                && targetBin3 > 0)
+            {
+                bin3 = _samplingBin3;
+            }
+
             _rw4 = rw;
-            _samplingBin4 =
-                rw - _samplingBin1 - _samplingBin2 - _samplingBin3;
+            _samplingBin4 = rw - bin1 - bin2 - bin3;
         }
 
 
