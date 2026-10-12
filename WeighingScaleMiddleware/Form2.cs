@@ -35,6 +35,8 @@ namespace WeighingScaleMiddleware
         private System.Windows.Forms.Timer _batchingBlinkTimer;
         private bool _batchingBlinkState = false;
         private int _samplingDelayMs = 0;
+        private decimal _formulaAir = 0;
+        private decimal _formulaAditif = 0;
 
 
         public Form2()
@@ -246,6 +248,9 @@ namespace WeighingScaleMiddleware
             txtTargetAir.Text = result.Air.ToString("0.##");
             txtTargetAditif.Text = result.Aditif.ToString("0.##");
 
+            _formulaAir = result.Air;
+            _formulaAditif = result.Aditif;
+
             txtActualScale3.Text = "0";
             txtActualScale4.Text = "0";
         }
@@ -273,17 +278,34 @@ namespace WeighingScaleMiddleware
         }
 
 
+
+
         private Transaction CreateTransactionFromForm()
         {
             decimal.TryParse(txtVolume.Text, out decimal volume);
             decimal.TryParse(txtRitase.Text, out decimal ritase);
-            decimal.TryParse(txtTotal.Text, out decimal total);
             decimal.TryParse(txtSlump.Text, out decimal slump);
 
             decimal.TryParse(txtTargetBin1.Text, out decimal targetBin1);
             decimal.TryParse(txtTargetBin2.Text, out decimal targetBin2);
             decimal.TryParse(txtTargetBin3.Text, out decimal targetBin3);
             decimal.TryParse(txtTargetBin4.Text, out decimal targetBin4);
+
+            decimal bin1 = targetBin1 > 0 ? _samplingBin1 : 0;
+            decimal bin2 = targetBin2 > 0 ? _samplingBin2 : 0;
+            decimal bin3 = targetBin3 > 0 ? _samplingBin3 : 0;
+            decimal bin4 = targetBin4 > 0 ? _samplingBin4 : 0;
+
+            // Total seluruh material, termasuk Air dan Aditif
+            decimal total =
+                bin1 +
+                bin2 +
+                bin3 +
+                bin4 +
+                _samplingSemen +
+                _samplingFlyAsh +
+                _formulaAir +
+                _formulaAditif;
 
             return new Transaction
             {
@@ -304,19 +326,20 @@ namespace WeighingScaleMiddleware
                 Petugas = txtPetugas.Text.Trim(),
                 Slump = slump,
 
-                // Bin dengan target mutu 0 disimpan sebagai 0
-                Bin1 = targetBin1 > 0 ? _samplingBin1 : 0,
-                Bin2 = targetBin2 > 0 ? _samplingBin2 : 0,
-                Bin3 = targetBin3 > 0 ? _samplingBin3 : 0,
-                Bin4 = targetBin4 > 0 ? _samplingBin4 : 0,
+                Bin1 = bin1,
+                Bin2 = bin2,
+                Bin3 = bin3,
+                Bin4 = bin4,
 
                 Semen = _samplingSemen,
                 FlyAsh = _samplingFlyAsh,
 
-                Air = 0,
-                Aditif = 0
+                Air = _formulaAir,
+                Aditif = _formulaAditif
             };
         }
+
+
 
 
         private void SaveTransaction()
@@ -329,12 +352,7 @@ namespace WeighingScaleMiddleware
 
                 LoadTransactionHistory();
 
-                MessageBox.Show(
-                    "Transaksi berhasil disimpan.",
-                    "Informasi",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
+                
             }
             catch (Exception ex)
             {
@@ -362,6 +380,7 @@ namespace WeighingScaleMiddleware
         }
 
 
+
         private void LoadTransactionHistory()
         {
             FilterTransactionByDate();
@@ -377,7 +396,37 @@ namespace WeighingScaleMiddleware
             dgvHistori.AllowUserToDeleteRows = false;
             dgvHistori.SelectionMode =
                 DataGridViewSelectionMode.FullRowSelect;
+
+            // Sembunyikan kolom yang tidak diperlukan operator
+            string[] hiddenColumns =
+            {
+            "Supir",
+            "Pembeli",
+            "Proyek",
+            "NoTruck",
+            "Alamat",
+            "Ritase",
+            "Keterangan",
+            "Petugas",
+            "Slump"
+            };
+
+            foreach (string columnName in hiddenColumns)
+            {
+                if (dgvHistori.Columns.Contains(columnName))
+                {
+                    dgvHistori.Columns[columnName].Visible = false;
+                }
+            }
+
+            // Pindahkan Total ke posisi paling kanan
+            if (dgvHistori.Columns.Contains("Total"))
+            {
+                dgvHistori.Columns["Total"].DisplayIndex =
+                    dgvHistori.Columns.Count - 1;
+            }
         }
+
 
         private void dtpTanggalHistori_ValueChanged(
         object sender, EventArgs e)
@@ -566,6 +615,7 @@ namespace WeighingScaleMiddleware
 
         }
 
+
         private void FilterTransactionByDate()
         {
             DateTime startDate = dtpStartDate.Value.Date;
@@ -588,9 +638,15 @@ namespace WeighingScaleMiddleware
                 endDate
             );
 
+            // Transaksi terbaru tampil di baris paling atas
+            var sortedTransactions = transactions
+                .OrderByDescending(t => t.Tanggal)
+                .ToList();
+
             dgvHistori.DataSource = null;
-            dgvHistori.DataSource = transactions;
+            dgvHistori.DataSource = sortedTransactions;
         }
+
 
         private void dtpStartDate_ValueChanged(object sender, EventArgs e)
         {
