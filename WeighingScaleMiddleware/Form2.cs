@@ -34,6 +34,7 @@ namespace WeighingScaleMiddleware
         private MainForm? _scaleSettingsForm;
         private System.Windows.Forms.Timer _batchingBlinkTimer;
         private bool _batchingBlinkState = false;
+        private int _samplingDelayMs = 0;
 
 
         public Form2()
@@ -271,12 +272,18 @@ namespace WeighingScaleMiddleware
             }
         }
 
+
         private Transaction CreateTransactionFromForm()
         {
             decimal.TryParse(txtVolume.Text, out decimal volume);
             decimal.TryParse(txtRitase.Text, out decimal ritase);
             decimal.TryParse(txtTotal.Text, out decimal total);
             decimal.TryParse(txtSlump.Text, out decimal slump);
+
+            decimal.TryParse(txtTargetBin1.Text, out decimal targetBin1);
+            decimal.TryParse(txtTargetBin2.Text, out decimal targetBin2);
+            decimal.TryParse(txtTargetBin3.Text, out decimal targetBin3);
+            decimal.TryParse(txtTargetBin4.Text, out decimal targetBin4);
 
             return new Transaction
             {
@@ -297,21 +304,20 @@ namespace WeighingScaleMiddleware
                 Petugas = txtPetugas.Text.Trim(),
                 Slump = slump,
 
-                // Hasil Sampling Aggregate
-                Bin1 = _samplingBin1,
-                Bin2 = _samplingBin2,
-                Bin3 = _samplingBin3,
-                Bin4 = _samplingBin4,
+                // Bin dengan target mutu 0 disimpan sebagai 0
+                Bin1 = targetBin1 > 0 ? _samplingBin1 : 0,
+                Bin2 = targetBin2 > 0 ? _samplingBin2 : 0,
+                Bin3 = targetBin3 > 0 ? _samplingBin3 : 0,
+                Bin4 = targetBin4 > 0 ? _samplingBin4 : 0,
 
-                // Material
                 Semen = _samplingSemen,
                 FlyAsh = _samplingFlyAsh,
 
-                // Air & Aditif tidak ada loadcell
                 Air = 0,
                 Aditif = 0
             };
         }
+
 
         private void SaveTransaction()
         {
@@ -759,12 +765,10 @@ namespace WeighingScaleMiddleware
             txtTransId.Text = _transactionService.GenerateTransactionId();
         }
 
+
         private void btnSampling1_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(txtTargetBin1.Text, out decimal target))
-                return;
-
-            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
             if (target <= 0)
@@ -773,6 +777,9 @@ namespace WeighingScaleMiddleware
                 _rw1 = 0;
                 return;
             }
+
+            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
+                return;
 
             _rw1 = rw;
             _samplingBin1 = rw;
@@ -783,9 +790,6 @@ namespace WeighingScaleMiddleware
             if (!decimal.TryParse(txtTargetBin2.Text, out decimal target))
                 return;
 
-            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
-                return;
-
             if (target <= 0)
             {
                 _samplingBin2 = 0;
@@ -793,18 +797,16 @@ namespace WeighingScaleMiddleware
                 return;
             }
 
-            _rw2 = rw;
+            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
+                return;
 
-            _samplingBin2 =
-                rw - _samplingBin1;
+            _rw2 = rw;
+            _samplingBin2 = rw - _samplingBin1;
         }
 
         private void btnSampling3_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(txtTargetBin3.Text, out decimal target))
-                return;
-
-            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
             if (target <= 0)
@@ -814,20 +816,17 @@ namespace WeighingScaleMiddleware
                 return;
             }
 
-            _rw3 = rw;
+            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
+                return;
 
+            _rw3 = rw;
             _samplingBin3 =
-                rw
-                - _samplingBin1
-                - _samplingBin2;
+                rw - _samplingBin1 - _samplingBin2;
         }
 
         private void btnSampling4_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(txtTargetBin4.Text, out decimal target))
-                return;
-
-            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
                 return;
 
             if (target <= 0)
@@ -837,14 +836,14 @@ namespace WeighingScaleMiddleware
                 return;
             }
 
-            _rw4 = rw;
+            if (!decimal.TryParse(txtActualScale1.Text, out decimal rw))
+                return;
 
+            _rw4 = rw;
             _samplingBin4 =
-                rw
-                - _samplingBin1
-                - _samplingBin2
-                - _samplingBin3;
+                rw - _samplingBin1 - _samplingBin2 - _samplingBin3;
         }
+
 
         private void btnSampling5_Click(object sender, EventArgs e)
         {
